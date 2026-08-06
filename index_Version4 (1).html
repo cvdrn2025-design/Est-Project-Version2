@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimator Proyek Premium</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .table-input { width: 100%; border-collapse: collapse; }
+        .table-input th, .table-input td { padding: 12px 10px; border-bottom: 1px solid #e5e7eb; text-align: center; vertical-align: middle; }
+        .table-input th { background-color: #f8fafc; color: #475569; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .table-input tr:last-child td { border-bottom: none; }
+        .table-input tr:hover { background-color: #f8fafc; }
+        
+        input[type="number"], input[type="text"] { width: 100%; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 6px; background-color: white; transition: all 0.2s; }
+        input[type="number"]:focus, input[type="text"]:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        
+        .btn { color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; border: none; transition: all 0.2s ease-in-out; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .btn:active { transform: translateY(1px); }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .btn-danger { background: #ef4444; }
+        .btn-gray { background: #6b7280; }
+        .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+        .btn-teal { background: #14b8a6; }
+        .btn-blue { background: #3b82f6; }
+
+        select { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; background-color: white; transition: all 0.2s; }
+        select:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+
+        .toast-msg { position: fixed; bottom: 20px; right: 20px; padding: 16px 24px; border-radius: 12px; color: white; z-index: 50; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0; transform: translateY(20px); pointer-events: none; }
+        .toast-show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        .modal { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+
+        @media print { .no-print { display: none !important; } body { background: white; } .bg-gradient-to-r { background: #1f2937 !important; } input, select { border: none !important; background: transparent !important; } }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-4 md:p-8 font-sans text-slate-800">
+
+    <div id="toast" class="toast-msg bg-slate-900 shadow-xl border border-slate-700"></div>
+
+    <div id="modalProyek" class="modal">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-4 transform transition-all scale-95">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-slate-800">➕ Buat Proyek Baru</h3>
+                <button onclick="tutupModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Nama Proyek <span class="text-red-500">*</span></label>
+                    <input type="text" id="inputNamaProyek" placeholder="Contoh: Rumah Pak Heri" class="w-full border-slate-200 shadow-sm rounded-lg p-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Nama Pemilik / Client</label>
+                    <input type="text" id="inputNamaKlien" placeholder="Contoh: Bapak Heri" class="w-full border-slate-200 shadow-sm rounded-lg p-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Lokasi Proyek</label>
+                    <input type="text" id="inputLokasi" placeholder="Contoh: Citraland, Samarinda" class="w-full border-slate-200 shadow-sm rounded-lg p-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="tutupModal()" class="btn btn-gray">Batal</button>
+                <button onclick="simpanProyekBaru()" class="btn btn-success">Simpan & Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto">
+        <header class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-6 md:p-8 mb-6 shadow-xl shadow-slate-900/10 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-slate-700/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+            <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-white flex items-center gap-3 flex-wrap">
+                        <span class="text-indigo-400">📂</span> Estimator Proyek
+                        <span id="headerNamaProyek" class="text-lg md:text-2xl font-normal text-indigo-300 hidden ml-2"></span>
+                    </h1>
+                    <p class="text-slate-400 text-sm mt-1">Ketik nama proyek di kolom target untuk memilih file.</p>
+                </div>
+                <button onclick="bukaModalProyekBaru()" class="btn btn-success px-6 py-3 text-base whitespace-nowrap shadow-lg shadow-green-500/20">➕ Proyek Baru</button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Card Daftar Pekerjaan & Modul Perhitungan -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-hidden">
+                
+                <!-- 🆕 MODUL PERHITUNGAN VOLUME PEKERJAAN (Back Quantity) -->
+                <div class="mb-6 pb-6 border-b border-slate-200">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                        <h2 class="text-lg font-semibold text-slate-700 flex items-center gap-2">
+                            <span class="text-blue-500">📐</span> Modul Perhitungan Volume Pekerjaan
+                        </h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                        <!-- 1. Galian Tanah -->
+                        <div class="bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+                            <div class="font-bold text-slate-700 mb-2">1. Galian Tanah (m³)</div>
+                            <div class="flex gap-2 mb-2">
+                                <div><label class="text-xs text-slate-500">P</label><input type="number" id="galian_p" class="w-full p-1 border rounded" value="10" oninput="hitungGalian()"></div>
+                                <div><label class="text-xs text-slate-500">L</label><input type="number" id="galian_l" class="w-full p-1 border rounded" value="0.8" oninput="hitungGalian()"></div>
+                                <div><label class="text-xs text-slate-500">T</label><input type="number" id="galian_t" class="w-full p-1 border rounded" value="1" oninput="hitungGalian()"></div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Hasil: <span id="hasilGalian" class="font-bold text-blue-600">8.00</span> m³</span>
+                                <button onclick="tambahKeDaftar('Galian Tanah', document.getElementById('hasilGalian').innerText, 'm³')" class="btn btn-blue text-xs px-2 py-1">Tambah</button>
+                            </div>
+                        </div>
+
+                        <!-- 2. Urugan Tanah -->
+                        <div class="bg-green-50/50 p-4 rounded-lg border border-green-100">
+                            <div class="font-bold text-slate-700 mb-2">2. Urugan Tanah (m³)</div>
+                            <div class="flex gap-2 mb-2">
+                                <div><label class="text-xs text-slate-500">Volume Kosong</label><input type="number" id="urugan_v" class="w-full p-1 border rounded" value="10" oninput="hitungUrugan()"></div>
+                                <div><label class="text-xs text-slate-500">Faktor</label><input type="number" id="urugan_f" class="w-full p-1 border rounded" value="1.2" step="0.1" oninput="hitungUrugan()"></div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Hasil: <span id="hasilUrugan" class="font-bold text-green-600">12.00</span> m³</span>
+                                <button onclick="tambahKeDaftar('Urugan Tanah', document.getElementById('hasilUrugan').innerText, 'm³')" class="btn btn-blue text-xs px-2 py-1">Tambah</button>
+                            </div>
+                        </div>
+
+                        <!-- 3. Pondasi Batu Gunung -->
+                        <div class="bg-yellow-50/50 p-4 rounded-lg border border-yellow-100">
+                            <div class="font-bold text-slate-700 mb-2">3. Pondasi Batu Gunung (m³)</div>
+                            <div class="flex gap-1 mb-2 flex-wrap">
+                                <div><label class="text-xs text-slate-500">A</label><input type="number" id="pondasi_a" class="w-12 p-1 border rounded" value="0.4" oninput="hitungPondasi()"></div>
+                                <div><label class="text-xs text-slate-500">B</label><input type="number" id="pondasi_b" class="w-12 p-1 border rounded" value="0.8" oninput="hitungPondasi()"></div>
+                                <div><label class="text-xs text-slate-500">T</label><input type="number" id="pondasi_t" class="w-12 p-1 border rounded" value="0.6" oninput="hitungPondasi()"></div>
+                                <div><label class="text-xs text-slate-500">P</label><input type="number" id="pondasi_p" class="w-12 p-1 border rounded" value="20" oninput="hitungPondasi()"></div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Hasil: <span id="hasilPondasi" class="font-bold text-yellow-600">7.20</span> m³</span>
+                                <button onclick="tambahKeDaftar('Pondasi Batu Gunung', document.getElementById('hasilPondasi').innerText, 'm³')" class="btn btn-blue text-xs px-2 py-1">Tambah</button>
+                            </div>
+                        </div>
+
+                        <!-- 4. Besi Tulangan -->
+                        <div class="bg-purple-50/50 p-4 rounded-lg border border-purple-100">
+                            <div class="font-bold text-slate-700 mb-2">4. Besi Tulangan (kg)</div>
+                            <div class="flex gap-1 mb-2 flex-wrap">
+                                <div><label class="text-xs text-slate-500">D (mm)</label><input type="number" id="besi_d" class="w-14 p-1 border rounded" value="13" oninput="hitungBesi()"></div>
+                                <div><label class="text-xs text-slate-500">P (m)</label><input type="number" id="besi_p" class="w-14 p-1 border rounded" value="12" oninput="hitungBesi()"></div>
+                                <div><label class="text-xs text-slate-500">Jumlah</label><input type="number" id="besi_j" class="w-14 p-1 border rounded" value="8" oninput="hitungBesi()"></div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Hasil: <span id="hasilBesi" class="font-bold text-purple-600">99.84</span> kg</span>
+                                <button onclick="tambahKeDaftar('Besi Tulangan D' + document.getElementById('besi_d').value, document.getElementById('hasilBesi').innerText, 'kg')" class="btn btn-blue text-xs px-2 py-1">Tambah</button>
+                            </div>
+                        </div>
+
+                        <!-- 5. Beton Cor -->
+                        <div class="bg-orange-50/50 p-4 rounded-lg border border-orange-100">
+                            <div class="font-bold text-slate-700 mb-2">5. Beton Cor (m³)</div>
+                            <div class="flex gap-2 mb-2">
+                                <div><label class="text-xs text-slate-500">P</label><input type="number" id="beton_p" class="w-full p-1 border rounded" value="20" oninput="hitungBeton()"></div>
+                                <div><label class="text-xs text-slate-500">L</label><input type="number" id="beton_l" class="w-full p-1 border rounded" value="0.3" oninput="hitungBeton()"></div>
+                                <div><label class="text-xs text-slate-500">T</label><input type="number" id="beton_t" class="w-full p-1 border rounded" value="0.6" oninput="hitungBeton()"></div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Hasil: <span id="hasilBeton" class="font-bold text-orange-600">3.60</span> m³</span>
+                                <button onclick="tambahKeDaftar('Beton Cor', document.getElementById('hasilBeton').innerText, 'm³')" class="btn btn-blue text-xs px-2 py-1">Tambah</button>
+                            </div>
+                        </div>
+
+                        <!-- 6. Bekisting Balok & Kolom -->
+                        <div class="bg-pink-50/50 p-4 rounded-lg border border-pink-100">
+                            <div class="font-bold text-slate-700 mb-2">6. Bekisting (m²)</div>
+                            <div class="grid grid-cols-2 gap-1 mb-2 text-xs">
+                                <div class="bg-white p-1 rounded border">
+                                    <div class="font-semibold text-center">Balok</div>
+                                    <div class="flex gap-1"><label>T</label><input type="number" id="bekisting_t" class="w-10 p-0 border rounded" value="0.6" oninput="hitungBekisting()"></div>
+                                    <div class="flex gap-1"><label>L</label><input type="number" id="bekisting_l" class="w-10 p-0 border rounded" value="0.4" oninput="hitungBekisting()"></div>
+                                    <div class="flex gap-1"><label>P</label><input type="number" id="bekisting_p" class="w-10 p-0 border rounded" value="20" oninput="hitungBekisting()"></div>
+                                </div>
+                                <div class="bg-white p-1 rounded border">
+                                    <div class="font-semibold text-center">Kolom</div>
+                                    <div class="flex gap-1"><label>S</label><input type="number" id="bekisting_s" class="w-10 p-0 border rounded" value="0.3" oninput="hitungBekisting()"></div>
+                                    <div class="flex gap-1"><label>T</label><input type="number" id="bekisting_tk" class="w-10 p-0 border rounded" value="4" oninput="hitungBekisting()"></div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs">Balok: <span id="hasilBekistingBalok" class="font-bold text-pink-600">32.00</span> | Kolom: <span id="hasilBekistingKolom" class="font-bold text-pink-600">4.80</span></span>
+                                <div class="flex gap-1">
+                                    <button onclick="tambahKeDaftar('Bekisting Balok', document.getElementById('hasilBekistingBalok').innerText, 'm²')" class="btn btn-blue text-[10px] px-1 py-0.5">Tambah Balok</button>
+                                    <button onclick="tambahKeDaftar('Bekisting Kolom', document.getElementById('hasilBekistingKolom').innerText, 'm²')" class="btn btn-blue text-[10px] px-1 py-0.5">Tambah Kolom</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabel Daftar Pekerjaan -->
+                <h2 class="text-lg font-semibold text-slate-700 mb-4 flex items-center gap-2"><span class="text-indigo-500">📋</span> Daftar Pekerjaan</h2>
+                <div class="overflow-x-auto border border-slate-100 rounded-lg">
+                    <table class="table-input w-full text-sm" id="itemTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;">No</th>
+                                <th style="width: 35%; text-align: left; padding-left: 16px;">Nama Pekerjaan</th>
+                                <th style="width: 15%;">Volume</th>
+                                <th style="width: 15%;">Satuan</th>
+                                <th style="width: 15%;">Harga Satuan</th>
+                                <th style="width: 15%;">Total Harga</th>
+                                <th class="no-print" style="width: 5%;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="mt-5 flex flex-wrap gap-3 no-print">
+                    <button onclick="tambahBaris()" class="btn btn-success">➕ Tambah Baris</button>
+                    <div class="flex-1 md:text-right mt-2 md:mt-0 flex flex-wrap gap-2 justify-end">
+                        <button onclick="exportToExcel()" class="btn btn-warning">📥 Export Excel</button>
+                        <button onclick="window.print()" class="btn btn-teal">🖨️ Print / PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Simpan & Ambil -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 no-print">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Nama Proyek (Target Simpan / Ambil)</label>
+                        <input type="text" id="inputNamaProyekTarget" placeholder="Ketik atau pilih dari saran..." list="projectNamesList" class="w-full border-slate-200 shadow-sm rounded-lg p-2 focus:ring-indigo-500">
+                        <datalist id="projectNamesList"></datalist>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2 items-end">
+                        <div class="flex-1 w-full">
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Simpan ke</label>
+                            <select id="simpanTarget" class="w-full border-indigo-200 rounded-md shadow-sm text-sm bg-white p-2">
+                                <option value="browser" selected>💾 Ke Browser</option>
+                                <option value="server">☁️ Ke Server</option>
+                            </select>
+                        </div>
+                        <button onclick="simpanData()" class="btn btn-primary w-full sm:w-auto h-[42px]">Simpan Data</button>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2 items-end">
+                        <div class="flex-1 w-full">
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Ambil dari</label>
+                            <select id="ambilSource" class="w-full border-purple-200 rounded-md shadow-sm text-sm bg-white p-2">
+                                <option value="browser" selected>📂 Dari Browser</option>
+                                <option value="server">📂 Dari Server</option>
+                            </select>
+                        </div>
+                        <button onclick="ambilData()" class="btn bg-purple-600 hover:bg-purple-700 w-full sm:w-auto h-[42px]">Ambil Data</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Total & Logout -->
+            <div class="bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border border-slate-200 p-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="text-sm text-slate-500 font-medium uppercase tracking-wider">Grand Total Proyek</div>
+                        <div id="grandTotalDisplay" class="text-3xl md:text-4xl font-bold text-slate-800 mt-1" data-total="0">Rp 0</div>
+                    </div>
+                    <div>
+                        <button onclick="logoutApp()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg shadow transition duration-200 text-sm whitespace-nowrap">
+                            🚪 Logout / Keluar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- STATE PROYEK ---
+        let currentProject = { nama: '', klien: '', lokasi: '' };
+        let barisCounter = 0;
+        const API_URL = 'http://localhost:3000';
+
+        function showToast(msg, color = 'bg-slate-900') {
+            const t = document.getElementById('toast');
+            t.className = `toast-msg ${color} shadow-xl border border-slate-700`;
+            t.innerText = msg;
+            setTimeout(() => t.classList.add('toast-show'), 10);
+            setTimeout(() => t.classList.remove('toast-show'), 3500);
+        }
+
+        function updateHeaderNamaProyek() {
+            const el = document.getElementById('headerNamaProyek');
+            if (currentProject.nama) {
+                el.classList.remove('hidden');
+                el.innerText = '| ' + currentProject.nama;
+            } else {
+                el.classList.add('hidden');
+                el.innerText = '';
+            }
+        }
+
+        function bukaModalProyekBaru() {
+            document.getElementById('modalProyek').classList.add('active');
+            document.getElementById('inputNamaProyek').value = '';
+            document.getElementById('inputNamaKlien').value = '';
+            document.getElementById('inputLokasi').value = '';
+            document.getElementById('inputNamaProyek').focus();
+        }
+
+        function tutupModal() {
+            document.getElementById('modalProyek').classList.remove('active');
+        }
+
+        function simpanProyekBaru() {
+            const nama = document.getElementById('inputNamaProyek').value.trim();
+            if (!nama) return showToast('Nama Proyek wajib diisi!', 'bg-red-600');
+
+            currentProject.nama = nama;
+            currentProject.klien = document.getElementById('inputNamaKlien').value.trim();
+            currentProject.lokasi = document.getElementById('inputLokasi').value.trim();
+            
+            document.getElementById('tableBody').innerHTML = '';
+            barisCounter = 0;
+            tambahBaris(); 
+            
+            updateHeaderNamaProyek();
+            document.getElementById('inputNamaProyekTarget').value = currentProject.nama;
+            tambahNamaKeDatalist(nama);
+
+            tutupModal();
+            showToast('Proyek "' + currentProject.nama + '" telah dibuat!', 'bg-green-600');
+        }
+
+        function logoutApp() {
+            if(confirm('Apakah Anda yakin ingin keluar? Data yang belum disimpan akan hilang.')) {
+                currentProject = { nama: '', klien: '', lokasi: '' };
+                barisCounter = 0;
+                document.getElementById('tableBody').innerHTML = '';
+                document.getElementById('grandTotalDisplay').innerText = 'Rp 0';
+                document.getElementById('grandTotalDisplay').dataset.total = 0;
+                updateHeaderNamaProyek();
+                document.getElementById('inputNamaProyekTarget').value = '';
+                localStorage.removeItem('lastProject');
+                
+                showToast('Logout berhasil. Menutup aplikasi...', 'bg-red-600');
+                setTimeout(() => { window.location.href = 'about:blank'; }, 1000);
+            }
+        }
+
+        // --- MODUL PERHITUNGAN VOLUME (BACK QUANTITY) ---
+        // Fungsi hitung
+        function hitungGalian() {
+            const p = parseFloat(document.getElementById('galian_p').value) || 0;
+            const l = parseFloat(document.getElementById('galian_l').value) || 0;
+            const t = parseFloat(document.getElementById('galian_t').value) || 0;
+            document.getElementById('hasilGalian').innerText = (p * l * t).toFixed(2);
+        }
+
+        function hitungUrugan() {
+            const v = parseFloat(document.getElementById('urugan_v').value) || 0;
+            const f = parseFloat(document.getElementById('urugan_f').value) || 1;
+            document.getElementById('hasilUrugan').innerText = (v * f).toFixed(2);
+        }
+
+        function hitungPondasi() {
+            const a = parseFloat(document.getElementById('pondasi_a').value) || 0;
+            const b = parseFloat(document.getElementById('pondasi_b').value) || 0;
+            const t = parseFloat(document.getElementById('pondasi_t').value) || 0;
+            const p = parseFloat(document.getElementById('pondasi_p').value) || 0;
+            document.getElementById('hasilPondasi').innerText = (((a + b) / 2) * t * p).toFixed(2);
+        }
+
+        function hitungBesi() {
+            const d = parseFloat(document.getElementById('besi_d').value) || 0;
+            const p = parseFloat(document.getElementById('besi_p').value) || 0;
+            const j = parseFloat(document.getElementById('besi_j').value) || 0;
+            // Berat jenis: 0.006165 * d^2
+            const bj = 0.006165 * d * d;
+            document.getElementById('hasilBesi').innerText = (p * j * bj).toFixed(2);
+        }
+
+        function hitungBeton() {
+            const p = parseFloat(document.getElementById('beton_p').value) || 0;
+            const l = parseFloat(document.getElementById('beton_l').value) || 0;
+            const t = parseFloat(document.getElementById('beton_t').value) || 0;
+            document.getElementById('hasilBeton').innerText = (p * l * t).toFixed(2);
+        }
+
+        function hitungBekisting() {
+            // Balok
+            const t = parseFloat(document.getElementById('bekisting_t').value) || 0;
+            const l = parseFloat(document.getElementById('bekisting_l').value) || 0;
+            const p = parseFloat(document.getElementById('bekisting_p').value) || 0;
+            const balok = ((2 * t) + l) * p;
+            document.getElementById('hasilBekistingBalok').innerText = balok.toFixed(2);
+
+            // Kolom
+            const s = parseFloat(document.getElementById('bekisting_s').value) || 0;
+            const tk = parseFloat(document.getElementById('bekisting_tk').value) || 0;
+            const kolom = 4 * s * tk;
+            document.getElementById('hasilBekistingKolom').innerText = kolom.toFixed(2);
+        }
+
+        // Fungsi untuk menambahkan hasil modul ke dalam Daftar Pekerjaan
+        function tambahKeDaftar(nama, volume, satuan) {
+            const vol = parseFloat(volume);
+            if (isNaN(vol) || vol <= 0) return showToast('Volume tidak valid!', 'bg-red-600');
+
+            tambahBaris(); // Tambahkan baris baru di tabel
+            const rows = document.querySelectorAll('#tableBody tr');
+            const row = rows[rows.length - 1]; // Ambil baris terakhir
+
+            row.querySelector('.nama-item').value = nama;
+            row.querySelector('.volume').value = vol;
+            row.querySelector('.satuan').value = satuan;
+            hitungBaris(row); // Hitung ulang subtotal baris tersebut
+            
+            showToast(`"${nama}" berhasil ditambahkan ke daftar pekerjaan!`, 'bg-green-600');
+        }
+
+        // --- DATALIST LOGIC ---
+        function tambahNamaKeDatalist(nama) {
+            const list = JSON.parse(localStorage.getItem('proyekList')) || [];
+            if (!list.includes(nama)) {
+                list.push(nama);
+                localStorage.setItem('proyekList', JSON.stringify(list));
+                updateDatalist();
+            }
+        }
+
+        function updateDatalist() {
+            const list = JSON.parse(localStorage.getItem('proyekList')) || [];
+            const datalist = document.getElementById('projectNamesList');
+            datalist.innerHTML = '';
+            list.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                datalist.appendChild(opt);
+            });
+        }
+
+        // --- TABLE LOGIC ---
+        function tambahBaris() {
+            barisCounter++;
+            const tbody = document.getElementById('tableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-slate-500 font-medium">${barisCounter}</td>
+                <td style="text-align: left; padding-left: 16px;"><input type="text" class="nama-item" placeholder="Contoh: Besi D13"></td>
+                <td><input type="number" class="volume" step="0.01" min="0" placeholder="0"></td>
+                <td><input type="text" class="satuan" placeholder="kg / m²"></td>
+                <td><input type="number" class="harga-satuan" step="100" min="0" placeholder="0"></td>
+                <td><span class="subtotal font-semibold text-slate-700" data-total="0">0</span></td>
+                <td class="no-print"><button onclick="hapusBaris(this)" class="btn btn-danger btn-sm">Hapus</button></td>
+            `;
+            tbody.appendChild(tr);
+            // inisialisasi data-total agar selalu ada
+            const subtotalEl = tr.querySelector('.subtotal');
+            subtotalEl.dataset.total = 0;
+
+            tr.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', function() { hitungBaris(this.closest('tr')); });
+            });
+            hitungSemua();
+        }
+
+        function hitungBaris(row) {
+            const volume = parseFloat(row.querySelector('.volume').value) || 0;
+            const hargaSatuan = parseFloat(row.querySelector('.harga-satuan').value) || 0;
+            const subtotal = volume * hargaSatuan;
+            // Simpan nilai numerik untuk penghitungan/ekspor yang andal
+            const subtotalEl = row.querySelector('.subtotal');
+            subtotalEl.dataset.total = subtotal;
+            // Tampilkan versi terformat untuk user
+            subtotalEl.innerText = subtotal.toLocaleString('id-ID', {minimumFractionDigits: 0});
+            hitungSemua();
+        }
+
+        function hapusBaris(btn) {
+            const row = btn.closest('tr');
+            row.remove();
+            document.querySelectorAll('#tableBody tr').forEach((r, i) => r.cells[0].innerText = i + 1);
+            barisCounter = document.querySelectorAll('#tableBody tr').length;
+            hitungSemua();
+        }
+
+        function hitungSemua() {
+            let grandTotal = 0;
+            document.querySelectorAll('#tableBody tr').forEach(row => {
+                const dataTotal = parseFloat(row.querySelector('.subtotal').dataset.total) || 0;
+                grandTotal += dataTotal;
+            });
+            const grandEl = document.getElementById('grandTotalDisplay');
+            grandEl.dataset.total = grandTotal;
+            grandEl.innerText = 'Rp ' + grandTotal.toLocaleString('id-ID', {minimumFractionDigits: 0});
+        }
+
+        function getTableData() {
+            const data = [];
+            document.querySelectorAll('#tableBody tr').forEach(row => {
+                data.push({
+                    nama: row.querySelector('.nama-item').value,
+                    volume: parseFloat(row.querySelector('.volume').value) || 0,
+                    satuan: row.querySelector('.satuan').value,
+                    hargaSatuan: parseFloat(row.querySelector('.harga-satuan').value) || 0,
+                    total: parseFloat(row.querySelector('.subtotal').dataset.total) || 0
+                });
+            });
+            return data;
+        }
+
+        function loadDataToTable(data) {
+            document.getElementById('tableBody').innerHTML = '';
+            barisCounter = 0;
+            if (data && data.items && data.items.length > 0) {
+                data.items.forEach(item => {
+                    tambahBaris();
+                    const row = document.querySelector('#tableBody tr:last-child');
+                    row.querySelector('.nama-item').value = item.nama || '';
+                    row.querySelector('.volume').value = item.volume || 0;
+                    row.querySelector('.satuan').value = item.satuan || '';
+                    row.querySelector('.harga-satuan').value = item.hargaSatuan || 0;
+                    // hitungBaris akan mengisi data-total dan menampilkan subtotal terformat
+                    hitungBaris(row);
+                });
+            } else {
+                // Jika tidak ada items, buat satu baris kosong
+                if (!data || !data.items) tambahBaris();
+            }
+            currentProject.nama = data?.namaProyek || '';
+            currentProject.klien = data?.namaKlien || '';
+            currentProject.lokasi = data?.lokasiProyek || '';
+            
+            updateHeaderNamaProyek();
+            document.getElementById('inputNamaProyekTarget').value = currentProject.nama;
+            hitungSemua();
+        }
+
+        // --- SIMPAN & AMBIL ---
+        function simpanData() {
+            const target = document.getElementById('simpanTarget').value;
+            if (target === 'browser') simpanKeLocal();
+            else if (target === 'server') simpanKeServer();
+        }
+
+        function simpanKeLocal() {
+            const proyekName = document.getElementById('inputNamaProyekTarget').value.trim();
+            if (!proyekName) return showToast('Nama Proyek wajib diisi di kolom target!', 'bg-red-600');
+
+            currentProject.nama = proyekName; 
+
+            const data = { 
+                namaProyek: proyekName, 
+                namaKlien: currentProject.klien, 
+                lokasiProyek: currentProject.lokasi, 
+                items: getTableData() 
+            };
+            localStorage.setItem('proyek_' + proyekName, JSON.stringify(data));
+            tambahNamaKeDatalist(proyekName);
+            localStorage.setItem('lastProject', proyekName);
+            
+            updateHeaderNamaProyek();
+            showToast('Berhasil disimpan dengan nama: "' + proyekName + '"!', 'bg-indigo-800');
+        }
+
+        function ambilData() {
+            const source = document.getElementById('ambilSource').value;
+            if (source === 'browser') ambilDariLocal();
+            else if (source === 'server') ambilDariServer();
+        }
+
+        function ambilDariLocal() {
+            const proyekName = document.getElementById('inputNamaProyekTarget').value.trim();
+            if (!proyekName) return showToast('Masukkan Nama Proyek untuk mengambil data!', 'bg-red-600');
+            
+            const raw = localStorage.getItem('proyek_' + proyekName);
+            if (!raw) {
+                localStorage.removeItem('lastProject');
+                document.getElementById('inputNamaProyekTarget').value = '';
+                return showToast('Data "' + proyekName + '" tidak ditemukan di Browser.', 'bg-red-600');
+            }
+            
+            const parsedData = JSON.parse(raw);
+            if(!parsedData.lokasiProyek) parsedData.lokasiProyek = '';
+            loadDataToTable(parsedData);
+            showToast('Memuat "' + proyekName + '"!', 'bg-purple-600');
+        }
+
+        async function simpanKeServer() {
+            const proyekName = document.getElementById('inputNamaProyekTarget').value.trim();
+            if (!proyekName) return showToast('Nama Proyek wajib diisi!', 'bg-red-600');
+            currentProject.nama = proyekName;
+            updateHeaderNamaProyek();
+
+            const data = { 
+                namaProyek: proyekName, 
+                namaKlien: currentProject.klien, 
+                lokasiProyek: currentProject.lokasi, 
+                items: getTableData() 
+            };
+            try {
+                const res = await fetch(`${API_URL}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                const result = await res.json();
+                showToast(result.message || 'Tersimpan ke Server!', 'bg-indigo-600');
+            } catch (err) { showToast('Gagal ke Server. Pastikan Node.js berjalan.', 'bg-red-600'); }
+        }
+
+        async function ambilDariServer() {
+            const proyekName = document.getElementById('inputNamaProyekTarget').value.trim();
+            if (!proyekName) return showToast('Masukkan Nama Proyek untuk mengambil data!', 'bg-red-600');
+
+            try {
+                const res = await fetch(`${API_URL}/load?name=${encodeURIComponent(proyekName)}`);
+                const data = await res.json();
+                if (!data.items || data.items.length === 0) return showToast('Data tidak ditemukan di Server.', 'bg-red-600');
+                if(!data.lokasiProyek) data.lokasiProyek = '';
+                loadDataToTable(data);
+                showToast('Dimuat dari Server!', 'bg-indigo-600');
+            } catch (err) { showToast('Gagal ambil dari Server.', 'bg-red-600'); }
+        }
+
+        function sanitizeFilename(name) {
+            return (name || 'Proyek').replace(/[^a-z0-9_\-\.]/gi, '_');
+        }
+
+        function exportToExcel() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            if (rows.length === 0) return showToast('Tidak ada data!', 'bg-red-600');
+
+            const dataForExcel = [['No', 'Nama Pekerjaan', 'Volume', 'Satuan', 'Harga Satuan (Rp)', 'Total Harga (Rp)']];
+            rows.forEach(row => {
+                const no = row.cells[0].innerText;
+                const nama = row.querySelector('.nama-item').value || '';
+                const volume = row.querySelector('.volume').value || 0;
+                const satuan = row.querySelector('.satuan').value || '';
+                const harga = row.querySelector('.harga-satuan').value || 0;
+                // Ambil nilai numerik dari data-total
+                const total = parseFloat(row.querySelector('.subtotal').dataset.total) || 0;
+                dataForExcel.push([no, nama, volume, satuan, harga, total]);
+            });
+
+            // Tambah grand total numerik dari dataset
+            const grandEl = document.getElementById('grandTotalDisplay');
+            const grandNumeric = parseFloat(grandEl.dataset.total) || 0;
+            dataForExcel.push(['', '', '', '', 'GRAND TOTAL', grandNumeric]);
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(dataForExcel);
+            ws['!cols'] = [{ wch: 5 }, { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
+            XLSX.utils.book_append_sheet(wb, ws, "Estimasi Proyek");
+            const filename = `Estimasi_${sanitizeFilename(currentProject.nama || 'Proyek')}.xlsx`;
+            XLSX.writeFile(wb, filename);
+            showToast('Berhasil Export Excel!', 'bg-yellow-600');
+        }
+
+        window.onload = function() {
+            document.getElementById('tableBody').innerHTML = '';
+            currentProject = { nama: '', klien: '', lokasi: '' };
+            updateHeaderNamaProyek();
+            updateDatalist();
+            
+            // Inisialisasi perhitungan modul saat load
+            hitungGalian();
+            hitungUrugan();
+            hitungPondasi();
+            hitungBesi();
+            hitungBeton();
+            hitungBekisting();
+
+            const lastProject = localStorage.getItem('lastProject');
+            if (lastProject) {
+                document.getElementById('inputNamaProyekTarget').value = lastProject;
+                ambilDariLocal(); 
+            } else {
+                // buat 1 baris default agar UI tidak kosong
+                tambahBaris();
+            }
+        };
+    </script>
+</body>
+</html>
