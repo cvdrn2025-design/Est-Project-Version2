@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Estimator Proyek - Aplikasi Sederhana</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+    body {
+      background: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1000px;
+      width: 100%;
+      background: white;
+      border-radius: 1.5rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+      padding: 2rem 2rem 2.5rem;
+    }
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.8rem;
+      color: #1e293b;
+      margin-bottom: 0.3rem;
+    }
+    h1 span {
+      background: #2563eb;
+      color: white;
+      font-size: 1rem;
+      padding: 0.2rem 0.8rem;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+    .sub {
+      color: #64748b;
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+    .project-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+      background: #f8fafc;
+      padding: 1.2rem;
+      border-radius: 1rem;
+    }
+    .project-info label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+      gap: 0.3rem;
+      flex: 1 1 200px;
+    }
+    input, select {
+      padding: 0.7rem 1rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.7rem;
+      font-size: 0.95rem;
+      background: white;
+      transition: 0.15s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+    .item-table-wrapper {
+      overflow-x: auto;
+      margin: 1.5rem 0 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th {
+      background: #f1f5f9;
+      padding: 0.8rem 0.6rem;
+      text-align: left;
+      font-weight: 600;
+      color: #0f172a;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    td {
+      padding: 0.5rem 0.4rem;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+    td input {
+      width: 100%;
+      padding: 0.5rem 0.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      background: #ffffff;
+    }
+    td input:focus {
+      border-color: #2563eb;
+    }
+    .total-cell {
+      font-weight: 600;
+      color: #0f172a;
+      background: #f9fafb;
+    }
+    .btn {
+      background: white;
+      border: 1px solid #cbd5e1;
+      padding: 0.5rem 1rem;
+      border-radius: 0.6rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.15s;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .btn-primary {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    .btn-outline:hover {
+      background: #f1f5f9;
+    }
+    .btn-danger {
+      background: #fee2e2;
+      border-color: #fecaca;
+      color: #b91c1c;
+    }
+    .btn-danger:hover {
+      background: #fecaca;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0.8rem 0 1.5rem;
+      align-items: center;
+    }
+    .summary {
+      background: #f8fafc;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      align-items: flex-start;
+      margin: 1.2rem 0 1.8rem;
+    }
+    .summary-left {
+      flex: 2;
+      min-width: 250px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .summary-right {
+      flex: 1.2;
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px dashed #d1d5db;
+    }
+    .summary-row.total {
+      font-weight: 700;
+      font-size: 1.2rem;
+      border-bottom: none;
+      color: #0f172a;
+      margin-top: 0.5rem;
+      background: #e0e7ff;
+      padding: 0.6rem 1rem;
+      border-radius: 0.7rem;
+    }
+    .summary input {
+      width: 100px;
+      text-align: right;
+      padding: 0.4rem;
+    }
+    .print-area {
+      display: none;
+    }
+    @media print {
+      body { background: white; padding: 0; }
+      .container { box-shadow: none; padding: 1rem; }
+      .no-print { display: none; }
+      .print-area { display: block; }
+    }
+    .footer-note {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container" id="appContainer">
+  <h1>
+    📐 Estimator Proyek
+    <span>v1.0</span>
+  </h1>
+  <div class="sub">Hitung estimasi biaya proyek dengan cepat dan akurat.</div>
+
+  <!-- Informasi Proyek -->
+  <div class="project-info">
+    <label>📋 Nama Proyek
+      <input type="text" id="projectName" placeholder="Contoh: Renovasi Dapur" value="Proyek Baru">
+    </label>
+    <label>🏷️ Jenis Proyek
+      <select id="projectType">
+        <option value="Konstruksi">Konstruksi</option>
+        <option value="Renovasi">Renovasi</option>
+        <option value="IT/Software">IT/Software</option>
+        <option value="Desain">Desain</option>
+        <option value="Lainnya">Lainnya</option>
+      </select>
+    </label>
+    <label>📅 Tanggal Estimasi
+      <input type="date" id="estimateDate">
+    </label>
+  </div>
+
+  <!-- Tabel Item Pekerjaan -->
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h3 style="font-weight: 600; color: #1e293b;">📌 Daftar Item Pekerjaan / Material</h3>
+  </div>
+  <div class="item-table-wrapper">
+    <table id="itemTable">
+      <thead>
+         <tr>
+            <th style="width: 30%;">Deskripsi</th>
+            <th style="width: 10%;">Kuantitas</th>
+            <th style="width: 12%;">Satuan</th>
+            <th style="width: 18%;">Harga Satuan (Rp)</th>
+            <th style="width: 18%;">Total (Rp)</th>
+            <th style="width: 8%;"></th>
+         </tr>
+      </thead>
+      <tbody id="itemBody">
+         <!-- Rows akan diisi oleh JavaScript -->
+      </tbody>
+    </table>
+  </div>
+  <div class="actions no-print">
+    <button class="btn btn-primary" id="addItemBtn">➕ Tambah Item</button>
+    <button class="btn btn-outline" id="clearItemsBtn">🗑️ Hapus Semua</button>
+    <span style="margin-left: auto; font-size:0.85rem; color:#475569;">⏱️ Item dihitung otomatis</span>
+  </div>
+
+  <!-- Ringkasan Biaya -->
+  <div class="summary">
+    <div class="summary-left">
+      <div class="summary-row">
+        <span>Subtotal Item</span>
+        <strong id="subtotalDisplay">Rp 0</strong>
+      </div>
+      <div class="summary-row">
+        <span>Biaya Tambahan (%)</span>
+        <span style="display: flex; gap: 0.3rem; align-items: center;">
+          <input type="number" id="additionalPercent" value="0" min="0" max="100" step="0.5" style="width:70px;"> %
+        </span>
+      </div>
+      <div class="summary-row">
+        <span>Pajak (%)</span>
+        <span style="display: flex; gap: 0.3rem; align-items: center;">
+          <input type="number" id="taxPercent" value="11" min="0" max="100" step="0.5" style="width:70px;"> %
+        </span>
+      </div>
+      <div class="summary-row">
+        <span>Margin Keuntungan (%)</span>
+        <span style="display: flex; gap: 0.3rem; align-items: center;">
+          <input type="number" id="profitMargin" value="10" min="0" max="100" step="0.5" style="width:70px;"> %
+        </span>
+      </div>
+    </div>
+    <div class="summary-right">
+      <div class="summary-row"><span>Biaya Tambahan</span> <strong id="additionalAmount">Rp 0</strong></div>
+      <div class="summary-row"><span>Pajak</span> <strong id="taxAmount">Rp 0</strong></div>
+      <div class="summary-row"><span>Keuntungan</span> <strong id="profitAmount">Rp 0</strong></div>
+      <div class="summary-row total">
+        <span>💰 TOTAL ESTIMASI</span>
+        <strong id="grandTotalDisplay">Rp 0</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tombol aksi bawah -->
+  <div class="actions no-print" style="justify-content: flex-end;">
+    <button class="btn btn-outline" id="printBtn">🖨️ Cetak Estimasi</button>
+    <button class="btn btn-primary" id="refreshBtn">🔄 Hitung Ulang</button>
+  </div>
+  <div class="footer-note no-print">
+    * Isi item, kuantitas, dan harga satuan. Total akan dihitung otomatis. Persentase bisa disesuaikan.
+  </div>
+
+  <!-- Area cetak tersembunyi (akan diisi lewat JS) -->
+  <div class="print-area" id="printArea"></div>
+</div>
+
+<script>
+  (function() {
+    // State items
+    let items = [];
+
+    // DOM Elements
+    const itemBody = document.getElementById('itemBody');
+    const subtotalDisplay = document.getElementById('subtotalDisplay');
+    const additionalPercentInput = document.getElementById('additionalPercent');
+    const taxPercentInput = document.getElementById('taxPercent');
+    const profitMarginInput = document.getElementById('profitMargin');
+    const additionalAmountDisplay = document.getElementById('additionalAmount');
+    const taxAmountDisplay = document.getElementById('taxAmount');
+    const profitAmountDisplay = document.getElementById('profitAmount');
+    const grandTotalDisplay = document.getElementById('grandTotalDisplay');
+    const projectNameInput = document.getElementById('projectName');
+    const projectTypeSelect = document.getElementById('projectType');
+    const estimateDateInput = document.getElementById('estimateDate');
+
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    estimateDateInput.value = today;
+
+    // Format currency
+    function formatCurrency(amount) {
+      return 'Rp ' + Number(amount).toLocaleString('id-ID', {maximumFractionDigits:0});
+    }
+
+    // Parse currency string to number (not needed as we compute from number)
+    function parseCurrency(str) {
+      return Number(str.replace(/[^0-9]/g, '')) || 0;
+    }
+
+    // Hitung ulang semua total
+    function recalculateAll() {
+      let subtotal = 0;
+      // Hitung dari items array, pastikan valid
+      items.forEach((item, index) => {
+        const qty = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.unitPrice) || 0;
+        const total = qty * price;
+        item.total = total; // simpan di objek
+        // Update cell total di tabel jika ada
+        const totalCell = document.getElementById(`item-total-${index}`);
+        if (totalCell) {
+          totalCell.textContent = formatCurrency(total);
+        }
+        subtotal += total;
+      });
+
+      // Update subtotal display
+      subtotalDisplay.textContent = formatCurrency(subtotal);
+
+      // Ambil persentase
+      const additionalPct = parseFloat(additionalPercentInput.value) || 0;
+      const taxPct = parseFloat(taxPercentInput.value) || 0;
+      const profitPct = parseFloat(profitMarginInput.value) || 0;
+
+      // Hitung nilai tambahan berdasarkan subtotal
+      const additionalVal = subtotal * (additionalPct / 100);
+      const taxVal = subtotal * (taxPct / 100);
+      const profitVal = subtotal * (profitPct / 100);
+      const grandTotal = subtotal + additionalVal + taxVal + profitVal;
+
+      additionalAmountDisplay.textContent = formatCurrency(additionalVal);
+      taxAmountDisplay.textContent = formatCurrency(taxVal);
+      profitAmountDisplay.textContent = formatCurrency(profitVal);
+      grandTotalDisplay.textContent = formatCurrency(grandTotal);
+    }
+
+    // Render ulang seluruh tabel dari array items
+    function renderTable() {
+      itemBody.innerHTML = '';
+      if (items.length === 0) {
+        // Tambahkan baris kosong jika tidak ada
+        items.push({ description: '', quantity: '', unit: 'unit', unitPrice: '', total: 0 });
+      }
+      items.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.setAttribute('data-index', index);
+        row.innerHTML = `
+          <td><input type="text" class="item-desc" value="${escapeHtml(item.description || '')}" placeholder="Deskripsi pekerjaan"></td>
+          <td><input type="number" class="item-qty" value="${item.quantity || ''}" placeholder="0" min="0" step="any"></td>
+          <td><input type="text" class="item-unit" value="${escapeHtml(item.unit || 'unit')}" placeholder="unit"></td>
+          <td><input type="number" class="item-price" value="${item.unitPrice || ''}" placeholder="0" min="0" step="any"></td>
+          <td class="total-cell" id="item-total-${index}">${formatCurrency(item.total || 0)}</td>
+          <td><button class="btn btn-danger btn-sm delete-item-btn" data-index="${index}" title="Hapus item">✕</button></td>
+        `;
+        itemBody.appendChild(row);
+      });
+
+      // Attach event listeners ke input baru
+      attachInputListeners();
+      // Recalculate setelah render untuk memastikan sinkron
+      recalculateAll();
+    }
+
+    // Escape HTML untuk mencegah XSS
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Attach event listener pada input di tabel
+    function attachInputListeners() {
+      // Deskripsi
+      document.querySelectorAll('.item-desc').forEach((input, index) => {
+        input.removeEventListener('input', handleDescChange);
+        input.addEventListener('input', handleDescChange);
+      });
+      // Kuantitas
+      document.querySelectorAll('.item-qty').forEach((input, index) => {
+        input.removeEventListener('input', handleQtyChange);
+        input.addEventListener('input', handleQtyChange);
+      });
+      // Satuan
+      document.querySelectorAll('.item-unit').forEach((input, index) => {
+        input.removeEventListener('input', handleUnitChange);
+        input.addEventListener('input', handleUnitChange);
+      });
+      // Harga satuan
+      document.querySelectorAll('.item-price').forEach((input, index) => {
+        input.removeEventListener('input', handlePriceChange);
+        input.addEventListener('input', handlePriceChange);
+      });
+      // Tombol hapus
+      document.querySelectorAll('.delete-item-btn').forEach(btn => {
+        btn.removeEventListener('click', handleDeleteItem);
+        btn.addEventListener('click', handleDeleteItem);
+      });
+    }
+
+    // Handler perubahan
+    function handleDescChange(e) {
+      const row = e.target.closest('tr');
+      const index = parseInt(row.getAttribute('data-index'), 10);
+      if (!isNaN(index) && items[index]) {
+        items[index].description = e.target.value;
+      }
+    }
+    function handleQtyChange(e) {
+      const row = e.target.closest('tr');
+      const index = parseInt(row.getAttribute('data-index'), 10);
+      if (!isNaN(index) && items[index]) {
+        items[index].quantity = e.target.value;
+        recalculateAll();
+      }
+    }
+    function handleUnitChange(e) {
+      const row = e.target.closest('tr');
+      const index = parseInt(row.getAttribute('data-index'), 10);
+      if (!isNaN(index) && items[index]) {
+        items[index].unit = e.target.value;
+      }
+    }
+    function handlePriceChange(e) {
+      const row = e.target.closest('tr');
+      const index = parseInt(row.getAttribute('data-index'), 10);
+      if (!isNaN(index) && items[index]) {
+        items[index].unitPrice = e.target.value;
+        recalculateAll();
+      }
+    }
+    function handleDeleteItem(e) {
+      const index = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+      if (!isNaN(index) && items.length > 1) {
+        items.splice(index, 1);
+        renderTable();
+      } else if (items.length === 1) {
+        // Jika hanya satu, kosongkan saja
+        items[0] = { description: '', quantity: '', unit: 'unit', unitPrice: '', total: 0 };
+        renderTable();
+      }
+    }
+
+    // Tambah item baru
+    function addNewItem() {
+      items.push({ description: '', quantity: '', unit: 'unit', unitPrice: '', total: 0 });
+      renderTable();
+    }
+
+    // Hapus semua item
+    function clearAllItems() {
+      if (confirm('Hapus semua item? Tindakan ini tidak bisa dibatalkan.')) {
+        items = [];
+        renderTable(); // akan membuat satu baris kosong
+      }
+    }
+
+    // Cetak estimasi
+    function printEstimate() {
+      const projectName = projectNameInput.value || 'Tanpa Nama';
+      const projectType = projectTypeSelect.value;
+      const estDate = estimateDateInput.value;
+      const subtotal = subtotalDisplay.textContent;
+      const additionalPct = additionalPercentInput.value;
+      const taxPct = taxPercentInput.value;
+      const profitPct = profitMarginInput.value;
+      const additionalAmt = additionalAmountDisplay.textContent;
+      const taxAmt = taxAmountDisplay.textContent;
+      const profitAmt = profitAmountDisplay.textContent;
+      const grandTotal = grandTotalDisplay.textContent;
+
+      // Bangun string item
+      let itemsHtml = '';
+      items.forEach(item => {
+        const desc = item.description || '-';
+        const qty = item.quantity || 0;
+        const unit = item.unit || 'unit';
+        const price = formatCurrency(item.unitPrice || 0);
+        const total = formatCurrency(item.total || 0);
+        itemsHtml += `<tr><td>${escapeHtml(desc)}</td><td>${qty}</td><td>${escapeHtml(unit)}</td><td>${price}</td><td>${total}</td></tr>`;
+      });
+
+      const printContent = `
+        <div style="max-width:800px;margin:0 auto;font-family:Segoe UI, sans-serif; padding:2rem;">
+          <h2 style="text-align:center;">📐 Estimasi Proyek</h2>
+          <p><strong>Proyek:</strong> ${escapeHtml(projectName)} &nbsp;|&nbsp; <strong>Jenis:</strong> ${escapeHtml(projectType)} &nbsp;|&nbsp; <strong>Tanggal:</strong> ${estDate}</p>
+          <table style="width:100%; border-collapse:collapse; margin:1rem 0;" border="1" cellpadding="6">
+            <thead><tr><th>Deskripsi</th><th>Qty</th><th>Satuan</th><th>Harga Satuan</th><th>Total</th></tr></thead>
+            <tbody>${itemsHtml}</tbody>
+          </table>
+          <div style="margin-top:1rem;">
+            <p><strong>Subtotal:</strong> ${subtotal}</p>
+            <p>Biaya Tambahan (${additionalPct}%): ${additionalAmt}</p>
+            <p>Pajak (${taxPct}%): ${taxAmt}</p>
+            <p>Margin Keuntungan (${profitPct}%): ${profitAmt}</p>
+            <h3 style="background:#e0e7ff; padding:0.5rem;">💰 TOTAL ESTIMASI: ${grandTotal}</h3>
+          </div>
+          <p style="font-size:0.8rem; color:#666;">Dicetak pada ${new Date().toLocaleString('id-ID')}</p>
+        </div>
+      `;
+      const printArea = document.getElementById('printArea');
+      printArea.innerHTML = printContent;
+      window.print();
+    }
+
+    // Event listener untuk tombol utama
+    document.getElementById('addItemBtn').addEventListener('click', addNewItem);
+    document.getElementById('clearItemsBtn').addEventListener('click', clearAllItems);
+    document.getElementById('printBtn').addEventListener('click', printEstimate);
+    document.getElementById('refreshBtn').addEventListener('click', recalculateAll);
+
+    // Recalculate saat persentase berubah
+    additionalPercentInput.addEventListener('input', recalculateAll);
+    taxPercentInput.addEventListener('input', recalculateAll);
+    profitMarginInput.addEventListener('input', recalculateAll);
+
+    // Inisialisasi dengan satu item kosong
+    renderTable();
+  })();
+</script>
+</body>
+  </html>
